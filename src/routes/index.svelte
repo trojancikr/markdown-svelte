@@ -1,5 +1,5 @@
 <script>
-	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
+	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte'
 </script>
 
 <h1>Welcome to SvelteKit</h1>
