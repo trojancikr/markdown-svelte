@@ -2,7 +2,7 @@ import { Tokenizer } from './tokenizer'
 
 describe('tokenizer', () => {
 	test.each`
-		character | token
+		character | type
 		${'*'}    | ${'ASTERISK'}
 		${'\\'}   | ${'BACKSLASH'}
 		${'`'}    | ${'BACKTICK'}
@@ -22,47 +22,53 @@ describe('tokenizer', () => {
 		${'!'}    | ${'EXCLAMATION_MARK'}
 		${'|'}    | ${'PIPE'}
 		${'\n'}   | ${'NEW_LINE'}
-	`('parses $character as $token', ({ character, token }) => {
+	`('parses $character as $type', ({ character, type }) => {
 		const tokenizer = new Tokenizer(character)
-		expect(tokenizer.next()).toMatchObject({ type: token, content: character })
+		const [token] = tokenizer
+		expect(token).toMatchObject({ type, content: character })
 	})
 
 	it('parses a multiple characters as multiple tokens', () => {
 		const tokenizer = new Tokenizer('*+-')
-		expect(tokenizer.next()).toMatchObject({ type: 'ASTERISK', content: '*' })
-		expect(tokenizer.next()).toMatchObject({ type: 'PLUS_SIGN', content: '+' })
-		expect(tokenizer.next()).toMatchObject({ type: 'MINUS_SIGN', content: '-' })
-		expect(tokenizer.next()).toBeNull()
+		const [first, second, third, fourth] = tokenizer
+		expect(first).toMatchObject({ type: 'ASTERISK', content: '*' })
+		expect(second).toMatchObject({ type: 'PLUS_SIGN', content: '+' })
+		expect(third).toMatchObject({ type: 'MINUS_SIGN', content: '-' })
+		expect(fourth).toBeUndefined()
 	})
 
 	it('parses non special character as TEXT', () => {
 		const tokenizer = new Tokenizer('a')
-		expect(tokenizer.next()).toMatchObject({ type: 'TEXT', content: 'a' })
+		const [token] = tokenizer
+		expect(token).toMatchObject({ type: 'TEXT', content: 'a' })
 	})
 
 	it('parses text characters into a single token', () => {
 		const tokenizer = new Tokenizer('Hello, World')
-		expect(tokenizer.next()).toMatchObject({ type: 'TEXT', content: 'Hello, World' })
+		const [token] = tokenizer
+		expect(token).toMatchObject({ type: 'TEXT', content: 'Hello, World' })
 	})
 
 	it('parses text mixed with special characters into an array of tokens', () => {
 		const tokenizer = new Tokenizer('Hello, **World**!')
-		expect(tokenizer.next()).toMatchObject({ type: 'TEXT', content: 'Hello, ' })
-		expect(tokenizer.next()).toMatchObject({ type: 'ASTERISK', content: '*' })
-		expect(tokenizer.next()).toMatchObject({ type: 'ASTERISK', content: '*' })
-		expect(tokenizer.next()).toMatchObject({ type: 'TEXT', content: 'World' })
-		expect(tokenizer.next()).toMatchObject({ type: 'ASTERISK', content: '*' })
-		expect(tokenizer.next()).toMatchObject({ type: 'ASTERISK', content: '*' })
-		expect(tokenizer.next()).toMatchObject({ type: 'EXCLAMATION_MARK', content: '!' })
+		const [first, second, third, fourth, fifth, sixth, seventh ] = tokenizer
+		expect(first).toMatchObject({ type: 'TEXT', content: 'Hello, ' })
+		expect(second).toMatchObject({ type: 'ASTERISK', content: '*' })
+		expect(third).toMatchObject({ type: 'ASTERISK', content: '*' })
+		expect(fourth).toMatchObject({ type: 'TEXT', content: 'World' })
+		expect(fifth).toMatchObject({ type: 'ASTERISK', content: '*' })
+		expect(sixth).toMatchObject({ type: 'ASTERISK', content: '*' })
+		expect(seventh).toMatchObject({ type: 'EXCLAMATION_MARK', content: '!' })
 	})
 
 	it('processes the multiline input', () => {
 		const tokenizer = new Tokenizer(`Hello,
 
 World!`)
-		expect(tokenizer.next()).toMatchObject({ type: 'TEXT', content: 'Hello,' })
-		expect(tokenizer.next()).toMatchObject({ type: 'NEW_LINE', content: '\n' })
-		expect(tokenizer.next()).toMatchObject({ type: 'NEW_LINE', content: '\n' })
-		expect(tokenizer.next()).toMatchObject({ type: 'TEXT', content: 'World' })
+		const [first, second, third, fourth] = tokenizer
+		expect(first).toMatchObject({ type: 'TEXT', content: 'Hello,' })
+		expect(second).toMatchObject({ type: 'NEW_LINE', content: '\n' })
+		expect(third).toMatchObject({ type: 'NEW_LINE', content: '\n' })
+		expect(fourth).toMatchObject({ type: 'TEXT', content: 'World' })
 	})
 })

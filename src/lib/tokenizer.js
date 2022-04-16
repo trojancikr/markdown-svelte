@@ -25,37 +25,44 @@ const specials = {
 export class Tokenizer {
 	constructor(input) {
 		this.characters = Array.from(input)
-		this.pos = 0
 	}
 
-	nextCharacter() {
-		return this.characters[this.pos++]
-	}
+	[Symbol.iterator]() {
+		let pos = 0
+		const nextCharacter = () => this.characters[pos++]
+		const collectText = (firstCharacter) => {
+			const buffer = [firstCharacter]
 
-	collectText(firstCharacter) {
-		const buffer = [firstCharacter]
-		// eslint-disable-next-line no-constant-condition
-		while (true) {
-			let character = this.nextCharacter()
-			if (!character) break
-			const type = specials[character] ?? TEXT
-			if (type !== TEXT) break
-			buffer.push(character)
+			for (let i = pos; i < this.characters.length; i++) {
+				const character = nextCharacter()
+				const type = specials[character] ?? TEXT
+
+				if (type !== TEXT) break
+
+				buffer.push(character)
+			}
+
+			pos--
+			return { type: TEXT, content: buffer.join('') }
 		}
-		this.pos--
-		return { type: TEXT, content: buffer.join('') }
-	}
 
-	next() {
-		const character = this.nextCharacter()
+		return {
+			next() {
+				const character = nextCharacter()
 
-		if (!character) return null
+				if (!character)
+					return { done: true, value: null }
 
-		const type = specials[character] ?? TEXT
+				const type = specials[character] ?? TEXT
 
-		if (type === TEXT)
-			return this.collectText(character)
+				if (type === TEXT)
+					return { done: false, value: collectText(character) }
 
-		return { type, content: character }
+				return {
+					done: false,
+					value: { type, content: character },
+				}
+			}
+		}
 	}
 }
