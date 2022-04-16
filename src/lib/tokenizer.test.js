@@ -39,7 +39,7 @@ describe('tokenizer', () => {
 
 	it('parses non special character as TEXT', () => {
 		const tokenizer = new Tokenizer('a')
-		const [token] = tokenizer
+		const [token] = [...tokenizer]
 		expect(token).toMatchObject({ type: 'TEXT', content: 'a' })
 	})
 

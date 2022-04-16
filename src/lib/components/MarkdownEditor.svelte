@@ -1,10 +1,10 @@
 <script>
-	import { tokenize } from '$lib/tokenizer'
+	import { Tokenizer } from '$lib/tokenizer'
 	let source = ''
 	let tokens = []
 
 	$: {
-		tokens = tokenize(source)
+		tokens = [...(new Tokenizer(source))]
 	}
 </script>
 
