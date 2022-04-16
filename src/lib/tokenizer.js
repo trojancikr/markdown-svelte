@@ -1,73 +1,61 @@
+import { ASTERISK, BACKSLASH, BACKTICK, UNDERSCORE, LEFT_CURLY_BRACE, RIGHT_CURLY_BRACE, LEFT_BRACKET, RIGHT_BRACKET, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LESSER_THAN, GREATER_THAN, POUND_SIGN, PLUS_SIGN, MINUS_SIGN, DOT, EXCLAMATION_MARK, PIPE, NEW_LINE, TEXT } from "./token"
+
 const specials = {
-	'*': 'ASTERISK',
-	'\\': 'BACKSLASH',
-	'`': 'BACKTICK',
-	_: 'UNDERSCORE',
-	'{': 'LEFT_CURLY_BRACE',
-	'}': 'RIGHT_CURLY_BRACE',
-	'[': 'LEFT_BRACKET',
-	']': 'RIGHT_BRACKET',
-	'(': 'LEFT_PARENTHESIS',
-	')': 'RIGHT_PARENTHESIS',
-	'<': 'LESSER_THAN',
-	'>': 'GREATER_THAN',
-	'#': 'POUND_SIGN',
-	'+': 'PLUS_SIGN',
-	'-': 'MINUS_SIGN',
-	'.': 'DOT',
-	'!': 'EXCLAMATION_MARK',
-	'|': 'PIPE',
-	'\n': 'NEW_LINE'
+	'*': ASTERISK,
+	'\\': BACKSLASH,
+	'`': BACKTICK,
+	_: UNDERSCORE,
+	'{': LEFT_CURLY_BRACE,
+	'}': RIGHT_CURLY_BRACE,
+	'[': LEFT_BRACKET,
+	']': RIGHT_BRACKET,
+	'(': LEFT_PARENTHESIS,
+	')': RIGHT_PARENTHESIS,
+	'<': LESSER_THAN,
+	'>': GREATER_THAN,
+	'#': POUND_SIGN,
+	'+': PLUS_SIGN,
+	'-': MINUS_SIGN,
+	'.': DOT,
+	'!': EXCLAMATION_MARK,
+	'|': PIPE,
+	'\n': NEW_LINE
 }
 
-function newToken(type, content) {
-	return {
-		type,
-		content
+export class Tokenizer {
+	constructor(input) {
+		this.characters = Array.from(input)
+		this.pos = 0
 	}
-}
 
-function collectTextCharacters(from, end, characters) {
-	return characters.slice(from, end).join('')
-}
+	nextCharacter() {
+		return this.characters[this.pos++]
+	}
 
-function transformToCollapsedTextTokens(
-	{ firstTextCharacter, tokens },
-	character,
-	index,
-	characters
-) {
-	const type = specials[character] || 'TEXT'
-
-	if (type === 'TEXT') {
-		return {
-			firstTextCharacter: firstTextCharacter > -1 ? firstTextCharacter : index,
-			tokens
+	collectText(firstCharacter) {
+		const buffer = [firstCharacter]
+		// eslint-disable-next-line no-constant-condition
+		while (true) {
+			let character = this.nextCharacter()
+			if (!character) break
+			const type = specials[character] ?? TEXT
+			if (type !== TEXT) break
+			buffer.push(character)
 		}
+		this.pos--
+		return { type: TEXT, content: buffer.join('') }
 	}
 
-	if (firstTextCharacter > -1) {
-		tokens.push(newToken('TEXT', collectTextCharacters(firstTextCharacter, index, characters)))
-		firstTextCharacter = -1
+	next() {
+		const character = this.nextCharacter()
+
+		if (!character) return null
+
+		const type = specials[character] ?? TEXT
+
+		if (type === TEXT)
+			return this.collectText(character)
+
+		return { type, content: character }
 	}
-
-	tokens.push(newToken(type, character))
-
-	return { firstTextCharacter, tokens }
-}
-
-export function tokenize(input) {
-	const characters = Array.from(input)
-	const { firstTextCharacter, tokens } = characters.reduce(transformToCollapsedTextTokens, {
-		firstTextCharacter: -1,
-		tokens: []
-	})
-
-	if (firstTextCharacter > -1) {
-		tokens.push(
-			newToken('TEXT', collectTextCharacters(firstTextCharacter, characters.length, characters))
-		)
-	}
-
-	return tokens
 }
